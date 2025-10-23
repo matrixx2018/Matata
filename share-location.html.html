@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Share My Location</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background: #f9f9f9;
+      text-align: center;
+    }
+    .box {
+      background: white;
+      padding: 30px;
+      border-radius: 16px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      max-width: 400px;
+    }
+    button {
+      background: #e63946;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 12px 20px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <h2>Share My Location</h2>
+    <p>Allow location access to continue your order.</p>
+    <p id="status">Requesting location…</p>
+  </div>
+
+  <script>
+    const orderPage = "https://68b68d5375264.site123.me/kula-inn";
+
+    function redirectToOrder(lat, lon, address) {
+      const url = new URL(orderPage);
+      url.searchParams.set("lat", lat);
+      url.searchParams.set("lon", lon);
+      url.searchParams.set("address", encodeURIComponent(address));
+      window.location.href = url.toString();
+    }
+
+    function showStatus(text) {
+      document.getElementById("status").textContent = text;
+    }
+
+    function getAddress(lat, lon) {
+      return fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}`)
+        .then(res => res.json())
+        .then(data => data.display_name || "Unknown location")
+        .catch(() => "Unknown location");
+    }
+
+    function getLocation() {
+      if (!navigator.geolocation) {
+        showStatus("Geolocation is not supported by your browser.");
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(async pos => {
+        const lat = pos.coords.latitude;
+        const lon = pos.coords.longitude;
+        showStatus("Retrieving address…");
+        const address = await getAddress(lat, lon);
+        showStatus("Redirecting to order page…");
+        redirectToOrder(lat, lon, address);
+      }, () => {
+        showStatus("Unable to retrieve location. Please allow access and refresh.");
+      });
+    }
+
+    window.onload = getLocation;
+  </script>
+</body>
+</html>
